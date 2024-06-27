@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ClientWithVehicles is a struct that represents a client and the number of vehicles they have.
 type ClientWithVehicles struct {
 	Name         string `json:"name"`
 	ContactName  string `json:"contact_name"`
@@ -16,6 +17,7 @@ type ClientWithVehicles struct {
 	NumVehicles  int    `json:"number_of_vehicles"`
 }
 
+// VehicleInfo is a struct that represents a vehicle and its owner's information.
 type VehicleInfo struct {
 	Vin          string `json:"vin"`
 	ClientName   string `json:"client_name"`
@@ -25,12 +27,14 @@ type VehicleInfo struct {
 	Weights      []int  `json:"weights"`
 }
 
+// ClientVehicle is a struct that represents a vehicle and its basic information.
 type ClientVehicle struct {
 	Vin           string `json:"vin"`
 	Mileage       int    `json:"mileage"`
 	LargestWeight int    `json:"largest_weight"`
 }
 
+// ClientVehicles is a struct that represents a client and their vehicles.
 type ClientVehicles struct {
 	Name     string          `json:"name"`
 	Vehicles []ClientVehicle `json:"vehicles"`
@@ -46,6 +50,7 @@ func main() {
 	router.Run("localhost:8080")
 }
 
+// corsMiddleware is a middleware function that adds the necessary headers to allow CORS requests.
 func corsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
@@ -61,55 +66,59 @@ func corsMiddleware() gin.HandlerFunc {
 	}
 }
 
-// getAllClients responds with the list of all albums as JSON.
+// getAllClients responds with the list of all clients as JSON.
 func getAllClients(c *gin.Context) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	db, errDb := database.New()
+	db, err_db := database.New()
 	var clients *[]database.Client
-	var errCli error
-	var vehiclesByClient = make(map[string]int)
-	var allClients []ClientWithVehicles
+	var err_client error
+	var vehicles_by_client = make(map[string]int)
+	var all_clients []ClientWithVehicles
 
-	if errDb != nil {
+	if err_db != nil {
 		fmt.Println("ERROR!!")
 		return
 	}
 
-	clients, errCli = db.GetAllClients()
+	clients, err_client = db.GetAllClients()
+
+	if err_client != nil {
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "clients not found"})
+	}
 
 	wg.Add(len(*clients))
 
 	for i := 0; i < len(*clients); i++ {
-		var clientName string = (*clients)[i].Name
+		var client_name string = (*clients)[i].Name
 		go func(clientName string) {
 			defer wg.Done()
 			tVehicles, _ := db.GetVehiclesByClient(clientName)
 
 			mu.Lock()
-			vehiclesByClient[clientName] = len(*tVehicles)
+			vehicles_by_client[clientName] = len(*tVehicles)
 			mu.Unlock()
-		}(clientName)
+		}(client_name)
 	}
 
 	wg.Wait()
 
 	for i := 0; i < len(*clients); i++ {
-		var clientName string = (*clients)[i].Name
-		allClients = append(allClients, ClientWithVehicles{
-			Name:         clientName,
+		var client_name string = (*clients)[i].Name
+		all_clients = append(all_clients, ClientWithVehicles{
+			Name:         client_name,
 			ContactName:  (*clients)[i].ContactName,
 			ContactEmail: (*clients)[i].ContactEmail,
-			NumVehicles:  vehiclesByClient[clientName],
+			NumVehicles:  vehicles_by_client[client_name],
 		})
 	}
 
-	if errCli != nil {
+	if err_client != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "clients not found"})
 	}
 
-	c.IndentedJSON(http.StatusOK, allClients)
+	c.IndentedJSON(http.StatusOK, all_clients)
 }
 
 // getClientByID locates the client whose ID value matches the id
@@ -127,23 +136,23 @@ func getClientByID(c *gin.Context) {
 	}
 
 	var client *database.Client
-	var errCli error
+	var err_client error
 	var vehicles = new([]string)
-	var errVeh error
+	var err_vehicles error
 
 	go func() {
 		defer wg.Done()
-		client, errCli = db.GetClientsByName(id)
+		client, err_client = db.GetClientsByName(id)
 	}()
 
 	go func() {
 		defer wg.Done()
-		vehicles, errVeh = db.GetVehiclesByClient(id)
+		vehicles, err_vehicles = db.GetVehiclesByClient(id)
 	}()
 
 	wg.Wait()
 
-	if errCli != nil || errVeh != nil {
+	if err_client != nil || err_vehicles != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "error retrieving client"})
 	}
 
@@ -164,66 +173,61 @@ func getClientVehicles(c *gin.Context) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	db, err := database.New()
-	var vehicleVins *[]string
-	var errVins error
-	// var vehicles []database.Vehicle
-	// Create a map whose key is the vin and value is a sli
-	var vehicleInfo = make(map[string]ClientVehicle)
-	// var vehicleWeights = make(map[string]int)
+	db, err_db := database.New()
+	var vehicle_vins *[]string
+	var err_vins error
+	var vehicle_info = make(map[string]ClientVehicle)
 
-	if err != nil {
+	if err_db != nil {
 		fmt.Println("ERROR!!")
 		return
 	}
 
-	vehicleVins, errVins = db.GetVehiclesByClient(id)
+	vehicle_vins, err_vins = db.GetVehiclesByClient(id)
 
-	if errVins != nil {
+	if err_vins != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "error retrieving vehicles"})
 	}
 
 	// create default objects for vehicleInfo map
-	for i := 0; i < len(*vehicleVins); i++ {
-		vehicleInfo[(*vehicleVins)[i]] = ClientVehicle{
-			Vin:           (*vehicleVins)[i],
+	for i := 0; i < len(*vehicle_vins); i++ {
+		vehicle_info[(*vehicle_vins)[i]] = ClientVehicle{
+			Vin:           (*vehicle_vins)[i],
 			Mileage:       0,
 			LargestWeight: 0,
 		}
 	}
 
 	// Get the vehicle mileage and weight for each vehicle.
-	// These calls are made concurrently to speed up the process.
-	// wg.Add(len(*vehicleVins))
-
-	for i := 0; i < len(*vehicleVins); i++ {
+	// These calls are made using Goroutines to speed up the process.
+	for i := 0; i < len(*vehicle_vins); i++ {
 		wg.Add(2)
-		var vin string = (*vehicleVins)[i]
+		var vin string = (*vehicle_vins)[i]
 		go func(vin string) {
 			defer wg.Done()
 			vehicle, _ := db.GetVehicleByVin(vin)
 
 			mu.Lock()
-			vInfo := vehicleInfo[vin]
+			vInfo := vehicle_info[vin]
 			vInfo.Mileage = vehicle.Mileage
-			vehicleInfo[vin] = vInfo
+			vehicle_info[vin] = vInfo
 			mu.Unlock()
 		}(vin)
 
 		go func(vin string) {
 			defer wg.Done()
 			weights, _ := db.GetWeightsByVin(vin)
-			var largestWeight int
+			var largest_weight int
 
 			for i := 0; i < len(*weights); i++ {
-				if int((*weights)[i].Weight) > largestWeight {
-					largestWeight = int((*weights)[i].Weight)
+				if int((*weights)[i].Weight) > largest_weight {
+					largest_weight = int((*weights)[i].Weight)
 				}
 			}
 			mu.Lock()
-			vInfo := vehicleInfo[vin]
-			vInfo.LargestWeight = largestWeight
-			vehicleInfo[vin] = vInfo
+			vInfo := vehicle_info[vin]
+			vInfo.LargestWeight = largest_weight
+			vehicle_info[vin] = vInfo
 			mu.Unlock()
 		}(vin)
 	}
@@ -231,14 +235,14 @@ func getClientVehicles(c *gin.Context) {
 	wg.Wait()
 
 	// sent the response using the vehicleInfo map
-	var clientVehicles ClientVehicles
-	clientVehicles.Name = id
+	var client_vehicles ClientVehicles
+	client_vehicles.Name = id
 
-	for key := range vehicleInfo {
-		clientVehicles.Vehicles = append(clientVehicles.Vehicles, vehicleInfo[key])
+	for key := range vehicle_info {
+		client_vehicles.Vehicles = append(client_vehicles.Vehicles, vehicle_info[key])
 	}
 
-	c.IndentedJSON(http.StatusOK, clientVehicles)
+	c.IndentedJSON(http.StatusOK, client_vehicles)
 
 }
 
@@ -249,51 +253,51 @@ func getVehicalByID(c *gin.Context) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	db, errDb := database.New()
+	db, err_db := database.New()
 
-	if errDb != nil {
+	if err_db != nil {
 		fmt.Println("ERROR!!")
 		return
 	}
 
 	var vehicle *database.Vehicle
-	var errVeh error
+	var err_vehicle error
 	var weights *[]database.Weight
-	var errWei error
+	var err_weight error
 	var client *database.Client
-	var errCli error
+	var err_client error
 
 	go func() {
 		defer wg.Done()
-		vehicle, errVeh = db.GetVehicleByVin(id)
+		vehicle, err_vehicle = db.GetVehicleByVin(id)
 	}()
 
 	go func() {
 		defer wg.Done()
-		weights, errWei = db.GetWeightsByVin(id)
+		weights, err_weight = db.GetWeightsByVin(id)
 	}()
 
 	wg.Wait()
 
-	client, errCli = db.GetClientsByName(vehicle.Client)
+	client, err_client = db.GetClientsByName(vehicle.Client)
 
-	if errVeh != nil || errWei != nil || errCli != nil {
+	if err_vehicle != nil || err_weight != nil || err_client != nil {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "error retrieving vehicle"})
 	}
 
-	var intWeights []int
+	var int_weights []int
 	for i := 0; i < len(*weights); i++ {
-		intWeights = append(intWeights, int((*weights)[i].Weight))
+		int_weights = append(int_weights, int((*weights)[i].Weight))
 	}
 
-	var vehicleInfo = VehicleInfo{
+	var vehicle_info = VehicleInfo{
 		Vin:          vehicle.Vin,
 		ClientName:   client.Name,
 		ContactName:  client.ContactName,
 		ContactEmail: client.ContactEmail,
 		Mileage:      vehicle.Mileage,
-		Weights:      intWeights,
+		Weights:      int_weights,
 	}
 
-	c.IndentedJSON(http.StatusOK, vehicleInfo)
+	c.IndentedJSON(http.StatusOK, vehicle_info)
 }
