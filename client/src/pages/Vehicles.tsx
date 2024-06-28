@@ -51,7 +51,7 @@ const Vehicles = () => {
     const [is_loading, setIsLoading] = useState(true)
     const [page, setPage] = useState(0);
     const [rows_per_page, setRowsPerPage] = useState(5);
-    const [connection_error, setConnectionError] = useState(false)
+    const [error_text, setErrorText] = useState("")
 
     useEffect(() => {
         try {
@@ -61,8 +61,8 @@ const Vehicles = () => {
                     setVehicle(res.data)
                     setIsLoading(false)
                 }).catch((error) => {
-                    console.error(error)
-                    setConnectionError(true)
+                    console.error(error.response.data.message)
+                    setErrorText(error.response.data.message) 
                     setIsLoading(false)
                 });
         } catch (error) {
@@ -149,7 +149,7 @@ const Vehicles = () => {
                         </Grid>
                     </Grid>
                 </Box>
-                {connection_error && <p>There was an error connecting to the server</p>}
+                {error_text && <p style={{color: 'red'}}>Error: {error_text}</p>}
             </Container>
         </div>
     )

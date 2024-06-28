@@ -68,7 +68,7 @@ const Client = () => {
     const [is_loading_vehicles, setIsLoadingVehicles] = useState(true)
     const [page, setPage] = useState(0);
     const [rows_per_page, setRowsPerPage] = useState(5);
-    const [connection_error, setConnectionError] = useState(false)
+    const [error_text, setErrorText] = useState("")
 
     useEffect(() => {
         try {
@@ -77,21 +77,22 @@ const Client = () => {
                 .then((res: AxiosResponse<ClientProps>) => {
                     setClient(res.data)
                 }).catch((error) => {
-                    console.error(error)
-                    setConnectionError(true)
+                    console.error(error.response.data.message)
+                    setErrorText(error.response.data.message)
                 });
             axios.get('http://localhost:8080/clients/' + params.id + '/vehicles')
                 .then((res: AxiosResponse<Vehicles>) => {
                     setVehicles({
                         name: res.data.name,
-                        vehicles: res.data.vehicles.sort(
+                        vehicles: res.data.vehicles?.sort(
                             (a: VehicleProps, b: VehicleProps) => a.vin.localeCompare(b.vin))
                     })
                     setIsLoadingVehicles(false)
                 }).catch((error) => {
-                    console.error(error)
                     setIsLoadingVehicles(false)
-                    setConnectionError(true)
+                    console.error(error)
+                    console.error(error.response.data.message)
+                    setErrorText(error.response.data.message)
                 });
         } catch (error) {
             console.error(error)
@@ -151,7 +152,7 @@ const Client = () => {
                                                     </TableCell>
                                                 </TableRow>
                                             }
-                                            {vehicles?.vehicles.slice(page * rows_per_page, page * rows_per_page + rows_per_page).map((vehicle, i) => {
+                                            {vehicles?.vehicles?.slice(page * rows_per_page, page * rows_per_page + rows_per_page).map((vehicle, i) => {
                                                 return (
                                                     <VehicleRow {...vehicle} key={i} />
                                                 )
@@ -162,7 +163,7 @@ const Client = () => {
                                                 <TablePagination
                                                     rowsPerPageOptions={[3, 5, 10, 25]}
                                                     colSpan={3}
-                                                    count={vehicles?.vehicles.length || 0}
+                                                    count={vehicles?.vehicles?.length || 0}
                                                     rowsPerPage={rows_per_page}
                                                     page={page}
                                                     onPageChange={handleChangePage}
@@ -176,7 +177,7 @@ const Client = () => {
                         </Grid>
                     </Grid>
                 </Box>
-                {connection_error && <p>There was an error connecting to the server</p>}
+                {error_text && <p style={{ color: 'red' }}>Error: {error_text}</p>}
             </Container>
         </div>
     )
