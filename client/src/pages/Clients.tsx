@@ -51,19 +51,21 @@ const ClientRow = ({ name, contact_name, contact_email, number_of_vehicles }: Cl
 const Clients = () => {
     const [clients, setClients] = useState<ClientProps[]>([])
     const [is_loading, setIsLoading] = useState(true)
-    const [connection_error, setConnectionError] = useState(false)
+    const [error_text, setErrorText] = useState('')
 
     useEffect(() => {
         try {
             document.title = "Clients | Starter Project"
+
+            // Get clients from the server
             axios.get('http://localhost:8080/clients')
                 .then((res: AxiosResponse<ClientProps[]>) => {
                     setClients(res.data.sort((a, b) => a.name.localeCompare(b.name)))
                     setIsLoading(false)
                 }).catch((error) => {
-                    console.error(error)
                     setIsLoading(false)
-                    setConnectionError(true)
+                    console.error(error.response.data.message)
+                    setErrorText(error.response.data.message)
                 });
 
         } catch (error) {
@@ -96,7 +98,7 @@ const Clients = () => {
                     </Table>
                 </TableContainer>
                 {is_loading && <CircularProgress style={{ marginTop: 50 }} />}
-                {connection_error && <p>There was an error connecting to the server</p>}
+                {error_text && <p style={{color: 'red'}}>Error: {error_text}</p>}
             </Container>
         </div>
     )

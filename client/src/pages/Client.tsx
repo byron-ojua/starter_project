@@ -73,6 +73,8 @@ const Client = () => {
     useEffect(() => {
         try {
             document.title = params.id + " | Starter Project"
+
+            // Fetch client and vehicles data
             axios.get('http://localhost:8080/clients/' + params.id)
                 .then((res: AxiosResponse<ClientProps>) => {
                     setClient(res.data)
@@ -90,7 +92,6 @@ const Client = () => {
                     setIsLoadingVehicles(false)
                 }).catch((error) => {
                     setIsLoadingVehicles(false)
-                    console.error(error)
                     console.error(error.response.data.message)
                     setErrorText(error.response.data.message)
                 });

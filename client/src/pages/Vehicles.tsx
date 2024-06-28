@@ -56,6 +56,8 @@ const Vehicles = () => {
     useEffect(() => {
         try {
             document.title = params.id + " | Vehicles | Starter Project"
+
+            // Get vehicle info from the server
             axios.get('http://localhost:8080/vehicles/' + params.id)
                 .then((res: AxiosResponse<Vehicle>) => {
                     setVehicle(res.data)
