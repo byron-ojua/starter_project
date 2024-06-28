@@ -68,6 +68,7 @@ const Client = () => {
     const [is_loading_vehicles, setIsLoadingVehicles] = useState(true)
     const [page, setPage] = useState(0);
     const [rows_per_page, setRowsPerPage] = useState(5);
+    const [connection_error, setConnectionError] = useState(false)
 
     useEffect(() => {
         try {
@@ -77,6 +78,7 @@ const Client = () => {
                     setClient(res.data)
                 }).catch((error) => {
                     console.error(error)
+                    setConnectionError(true)
                 });
             axios.get('http://localhost:8080/clients/' + params.id + '/vehicles')
                 .then((res: AxiosResponse<Vehicles>) => {
@@ -88,6 +90,8 @@ const Client = () => {
                     setIsLoadingVehicles(false)
                 }).catch((error) => {
                     console.error(error)
+                    setIsLoadingVehicles(false)
+                    setConnectionError(true)
                 });
         } catch (error) {
             console.error(error)
@@ -112,7 +116,7 @@ const Client = () => {
     return (
         <div className="App">
             <Container>
-                <h1>{client?.name}</h1>
+                <h1>{params.id}</h1>
                 <Box sx={{ flexGrow: 1 }}>
                     <Grid container spacing={2} columns={3}>
                         <Grid item xs={1}>
@@ -172,6 +176,7 @@ const Client = () => {
                         </Grid>
                     </Grid>
                 </Box>
+                {connection_error && <p>There was an error connecting to the server</p>}
             </Container>
         </div>
     )

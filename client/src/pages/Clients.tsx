@@ -51,6 +51,7 @@ const ClientRow = ({ name, contact_name, contact_email, number_of_vehicles }: Cl
 const Clients = () => {
     const [clients, setClients] = useState<ClientProps[]>([])
     const [is_loading, setIsLoading] = useState(true)
+    const [connection_error, setConnectionError] = useState(false)
 
     useEffect(() => {
         try {
@@ -61,6 +62,8 @@ const Clients = () => {
                     setIsLoading(false)
                 }).catch((error) => {
                     console.error(error)
+                    setIsLoading(false)
+                    setConnectionError(true)
                 });
 
         } catch (error) {
@@ -93,6 +96,7 @@ const Clients = () => {
                     </Table>
                 </TableContainer>
                 {is_loading && <CircularProgress style={{ marginTop: 50 }} />}
+                {connection_error && <p>There was an error connecting to the server</p>}
             </Container>
         </div>
     )
