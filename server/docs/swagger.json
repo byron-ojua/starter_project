@@ -1,0 +1,141 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a simple API that retrieves information about clients and their vehicles.",
+        "title": "Simple API",
+        "contact": {
+            "name": "Byron Ojua-Nice",
+            "url": "https://github.com/byron-ojua",
+            "email": "byron.n@air-weigh.com"
+        },
+        "version": "1"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/clients": {
+            "get": {
+                "description": "Get all clients and the number of vehicles they have",
+                "tags": [
+                    "clients"
+                ],
+                "summary": "Get all clients",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/main.ClientWithVehicles"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/clients/{id}": {
+            "get": {
+                "description": "Get a client by their ID and the number of vehicles they have",
+                "tags": [
+                    "clients"
+                ],
+                "summary": "Get a client by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Client ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.ClientWithVehicles"
+                        }
+                    }
+                }
+            }
+        },
+        "/vehicles/{id}": {
+            "get": {
+                "description": "Get a vehicle by its ID and its owner's information",
+                "tags": [
+                    "vehicles"
+                ],
+                "summary": "Get a vehicle by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Vehicle ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.VehicleInfo"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.ClientWithVehicles": {
+            "type": "object",
+            "properties": {
+                "contact_email": {
+                    "type": "string"
+                },
+                "contact_name": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number_of_vehicles": {
+                    "type": "integer"
+                }
+            }
+        },
+        "main.VehicleInfo": {
+            "type": "object",
+            "properties": {
+                "client_name": {
+                    "type": "string"
+                },
+                "contact_email": {
+                    "type": "string"
+                },
+                "contact_name": {
+                    "type": "string"
+                },
+                "mileage": {
+                    "type": "integer"
+                },
+                "vin": {
+                    "type": "string"
+                },
+                "weights": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "bearerToken": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

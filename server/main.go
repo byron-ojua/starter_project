@@ -17,6 +17,10 @@ import (
 
 	"github.com/byron-ojua/starter-project/database"
 	"github.com/gin-gonic/gin"
+
+	_ "github.com/byron-ojua/starter-project/docs"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // ClientWithVehicles is a struct that represents a client and the number of vehicles they have.
@@ -50,13 +54,32 @@ type ClientVehicles struct {
 	Vehicles []ClientVehicle `json:"vehicles"`
 }
 
+// @title Simple API
+// @version 1
+// @description This is a simple API that retrieves information about clients and their vehicles.
+
+// @contact.name Byron Ojua-Nice
+// @contact.url https://github.com/byron-ojua
+// @contact.email byron.n@air-weigh.com
+
+// @securityDefinitions.apikey bearerToken
+// @in header
+// @name Authorization
+
+// @host localhost:8080
+// @BasePath /
 func main() {
 	router := gin.Default()
 	router.Use(corsMiddleware())
+
+	// Swagger documentation
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	router.GET("/clients", getAllClients)
 	router.GET("/clients/:id", getClientByID)
 	router.GET("/clients/:id/vehicles", getClientVehicles)
 	router.GET("/vehicles/:id", getVehicalByID)
+
 	router.Run("localhost:8080")
 }
 
@@ -77,6 +100,11 @@ func corsMiddleware() gin.HandlerFunc {
 }
 
 // getAllClients responds with the list of all clients as JSON.
+// @Summary Get all clients
+// @Description Get all clients and the number of vehicles they have
+// @Tags clients
+// @Success 200 {array} ClientWithVehicles
+// @Router /clients [get]
 func getAllClients(c *gin.Context) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
@@ -139,6 +167,12 @@ func getAllClients(c *gin.Context) {
 
 // getClientByID locates the client whose ID value matches the id
 // parameter sent by the client, then returns that client as a response.
+// @Summary Get a client by ID
+// @Description Get a client by their ID and the number of vehicles they have
+// @Tags clients
+// @Param id path string true "Client ID"
+// @Success 200 {object} ClientWithVehicles
+// @Router /clients/{id} [get]
 func getClientByID(c *gin.Context) {
 	id := c.Param("id")
 	var wg sync.WaitGroup
@@ -195,6 +229,12 @@ func getClientByID(c *gin.Context) {
 
 // getVehicalByID locates the vehicle whoses ID value matches the id
 // parameter sent by the client, then returns that vehicle as a response.
+// @Summary Get a vehicle by ID
+// @Description Get a vehicle by its ID and its owner's information
+// @Tags vehicles
+// @Param id path string true "Vehicle ID"
+// @Success 200 {object} VehicleInfo
+// @Router /vehicles/{id} [get]
 func getClientVehicles(c *gin.Context) {
 	id := c.Param("id")
 	var wg sync.WaitGroup
@@ -293,6 +333,12 @@ func getClientVehicles(c *gin.Context) {
 
 // getClientByID locates the client whose ID value matches the id
 // parameter sent by the client, then returns that client as a response.
+// @Summary Get a client by ID
+// @Description Get a client by their ID and the number of vehicles they have
+// @Tags clients
+// @Param id path string true "Client ID"
+// @Success 200 {object} ClientWithVehicles
+// @Router /clients/{id} [get]
 func getVehicalByID(c *gin.Context) {
 	id := c.Param("id")
 	var wg sync.WaitGroup

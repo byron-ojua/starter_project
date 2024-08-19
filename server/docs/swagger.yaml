@@ -1,0 +1,94 @@
+basePath: /
+definitions:
+  main.ClientWithVehicles:
+    properties:
+      contact_email:
+        type: string
+      contact_name:
+        type: string
+      name:
+        type: string
+      number_of_vehicles:
+        type: integer
+    type: object
+  main.VehicleInfo:
+    properties:
+      client_name:
+        type: string
+      contact_email:
+        type: string
+      contact_name:
+        type: string
+      mileage:
+        type: integer
+      vin:
+        type: string
+      weights:
+        items:
+          type: integer
+        type: array
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: byron.n@air-weigh.com
+    name: Byron Ojua-Nice
+    url: https://github.com/byron-ojua
+  description: This is a simple API that retrieves information about clients and their
+    vehicles.
+  title: Simple API
+  version: "1"
+paths:
+  /clients:
+    get:
+      description: Get all clients and the number of vehicles they have
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.ClientWithVehicles'
+            type: array
+      summary: Get all clients
+      tags:
+      - clients
+  /clients/{id}:
+    get:
+      description: Get a client by their ID and the number of vehicles they have
+      parameters:
+      - description: Client ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.ClientWithVehicles'
+      summary: Get a client by ID
+      tags:
+      - clients
+  /vehicles/{id}:
+    get:
+      description: Get a vehicle by its ID and its owner's information
+      parameters:
+      - description: Vehicle ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.VehicleInfo'
+      summary: Get a vehicle by ID
+      tags:
+      - vehicles
+securityDefinitions:
+  bearerToken:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
