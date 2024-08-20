@@ -72,15 +72,46 @@ func main() {
 	router := gin.Default()
 	router.Use(corsMiddleware())
 
-	// Swagger documentation
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// Serve the login form
+	router.GET("/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "login.html", nil)
+	})
 
+	// Handle form submission and set a session/cookie
+	router.POST("/login", func(c *gin.Context) {
+		password := c.PostForm("password")
+		if password == "password" { // Replace with your actual password
+			c.SetCookie("authenticated", "true", 3600, "/", "localhost", false, true)
+			c.Redirect(http.StatusFound, "/swagger/index.html")
+		} else {
+			c.HTML(http.StatusUnauthorized, "login.html", gin.H{
+				"error": "Invalid password, please try again.",
+			})
+		}
+	})
+
+	// Apply password protection to the Swagger documentation
+	router.GET("/swagger/*any", passwordProtected(), ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Your existing routes
 	router.GET("/clients", getAllClients)
 	router.GET("/clients/:id", getClientByID)
 	router.GET("/clients/:id/vehicles", getClientVehicles)
 	router.GET("/vehicles/:id", getVehicalByID)
 
+	router.LoadHTMLGlob("templates/*")
 	router.Run("localhost:8080")
+}
+
+func passwordProtected() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if cookie, err := c.Cookie("authenticated"); err != nil || cookie != "true" {
+			c.Redirect(http.StatusFound, "/login")
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
 }
 
 // corsMiddleware is a middleware function that adds the necessary headers to allow CORS requests.
