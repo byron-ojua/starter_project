@@ -1,0 +1,223 @@
+basePath: /
+definitions:
+  api.BasicVehicle:
+    properties:
+      largest_weight:
+        description: The largest weight the vehicle has carried
+        type: integer
+      mileage:
+        description: The mileage of the vehicle
+        type: integer
+      vin:
+        description: The VIN of the vehicle
+        type: string
+    type: object
+  api.ClientInfo:
+    properties:
+      contact_email:
+        description: The email of the contact person for the client
+        type: string
+      contact_name:
+        description: The name of the contact person for the client
+        type: string
+      name:
+        description: The name of the client
+        type: string
+      number_of_vehicles:
+        description: The number of vehicles the client has
+        type: integer
+    type: object
+  api.ErrorsResponse:
+    properties:
+      errors:
+        description: Array of error messages
+        items:
+          type: string
+        type: array
+    type: object
+  api.VehicleInfo:
+    properties:
+      client_name:
+        type: string
+      contact_email:
+        type: string
+      contact_name:
+        type: string
+      mileage:
+        type: integer
+      vin:
+        type: string
+      weights:
+        items:
+          type: integer
+        type: array
+    type: object
+  api.getAllClientsOutput:
+    properties:
+      data:
+        description: The list of clients
+        items:
+          $ref: '#/definitions/api.ClientInfo'
+        type: array
+    type: object
+  api.getClientByIdOutput:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/api.ClientInfo'
+        description: The client
+    type: object
+  api.getClientVehiclesOutput:
+    properties:
+      data:
+        description: The vehicle
+        items:
+          $ref: '#/definitions/api.BasicVehicle'
+        type: array
+    type: object
+  api.getVehicleByIdOutput:
+    properties:
+      data:
+        $ref: '#/definitions/api.VehicleInfo'
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: byronojua@firstlaunch.dev
+    name: Byron Ojua-Nice
+    url: http://firstlaunch.dev
+  description: This is a simple API that retrieves information about clients and their
+    vehicles.
+  license:
+    name: TBD
+    url: TBD
+  termsOfService: TBD
+  title: Starter Project
+  version: "1.1"
+paths:
+  /clients:
+    get:
+      description: Get all clients and the number of vehicles they have
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.getAllClientsOutput'
+            type: array
+        "404":
+          description: Clients not found
+          schema:
+            $ref: '#/definitions/api.ErrorsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorsResponse'
+      summary: Get all clients
+      tags:
+      - Clients
+  /clients/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a client by their ID and the number of vehicles they have.
+      parameters:
+      - description: Client ID (name)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.getClientByIdOutput'
+        "400":
+          description: Bad request - invalid ID
+          schema:
+            $ref: '#/definitions/api.ErrorsResponse'
+        "404":
+          description: Client not found
+          schema:
+            $ref: '#/definitions/api.ErrorsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorsResponse'
+      summary: Get client by ID
+      tags:
+      - Clients
+  /clients/{id}/vehicles:
+    get:
+      consumes:
+      - application/json
+      description: Gets all vehicles for a client by their ID
+      parameters:
+      - description: Client ID (name)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.getClientVehiclesOutput'
+        "400":
+          description: Bad request - invalid ID
+          schema:
+            $ref: '#/definitions/api.ErrorsResponse'
+        "404":
+          description: Vehicles not found
+          schema:
+            $ref: '#/definitions/api.ErrorsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorsResponse'
+      summary: Get client vehicles
+      tags:
+      - Clients
+  /vehicles/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a vehicle by its ID.
+      parameters:
+      - description: Vehicle ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.getVehicleByIdOutput'
+        "400":
+          description: Bad request - Id is required
+          schema:
+            $ref: '#/definitions/api.ErrorsResponse'
+        "404":
+          description: Vehicle not found
+          schema:
+            $ref: '#/definitions/api.ErrorsResponse'
+      summary: Get vehicle by ID
+      tags:
+      - Vehicles
+securityDefinitions:
+  BearerAuth:
+    description: 'Use the format: `Bearer <your_token>` (Bearer must be added before
+      the token)'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
