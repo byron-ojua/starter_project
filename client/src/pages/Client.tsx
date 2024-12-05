@@ -1,49 +1,16 @@
-/* 
-* @file Client.tsx
-* @author Byron Ojua-Nice
-* @version 1.0
-* 
-* @section DESCRIPTION
-* 
-* This file contains the code for the Client page. This page displays info about the client and their vehicles.
-*/
-
 import {
     CircularProgress, Container, Paper, Table, TableBody, TableCell,
     TableContainer, TableHead, TableRow, Grid, Card, Box, CardHeader,
     CardContent, TablePagination, TableFooter,
 } from "@mui/material";
-import axios, { AxiosResponse } from "axios";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { ClientInfo } from "../utils/interfaces/client";
+import { BasicVehicle } from "../utils/interfaces/vehicle";
+import { fetchClientInfo, fetchClientVehicles } from "../utils/requests/client";
 
-// Struct to match API ClientWithVehicles struct
-type ClientProps = {
-    name: string,
-    contact_name: string,
-    contact_email: string
-    number_of_vehicles: number
-}
 
-// Struct to match API ClientVehicle struct
-type VehicleProps = {
-    vin: string,
-    mileage: number,
-    largest_weight: number,
-}
-
-// Struct to match API ClientVehicles struct
-type Vehicles = {
-    name: string,
-    vehicles: VehicleProps[]
-}
-
-/**
- * Creates a table row for a vehicle
- * @param param0 [VehicleProps]
- * @rerurns [JSX.Element] TableRow
- */
-function VehicleRow({ vin, mileage, largest_weight }: VehicleProps) {
+function VehicleRow({ vin, mileage, largest_weight }: BasicVehicle) {
     return (
         <TableRow hover>
             <TableCell>{vin}</TableCell>
@@ -62,43 +29,53 @@ function VehicleRow({ vin, mileage, largest_weight }: VehicleProps) {
  * @returns [JSX.Element] Client
  */
 const Client = () => {
-    const params = useParams()
-    const [client, setClient] = useState<ClientProps>()
-    const [vehicles, setVehicles] = useState<Vehicles>()
-    const [is_loading_vehicles, setIsLoadingVehicles] = useState(true)
+    const { id } = useParams<{ id?: string }>()
+    const [client, setClient] = useState<ClientInfo>()
+    const [isLoadingClient, setIsLoadingClient] = useState(true)
+    const [vehicles, setVehicles] = useState<BasicVehicle[]>([])
+    const [isLoadingVehicles, setIsLoadingVehicles] = useState(true)
     const [page, setPage] = useState(0);
-    const [rows_per_page, setRowsPerPage] = useState(5);
-    const [error_text, setErrorText] = useState("")
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [errorText, setErrorText] = useState("")
+
+    const getClientInfo = async () => {
+        if (id) {
+            try {
+                const response = await fetchClientInfo(id)
+                setClient(response.client)
+                setIsLoadingClient(false)
+            } catch (e: any) {
+                console.error(e)
+                setErrorText(e.message)
+                setIsLoadingClient(false)
+            }
+        }
+    }
+
+    const getClientVehicles = async () => {
+        if (id) {
+            try {
+                const response = await fetchClientVehicles(id)
+                setVehicles(response.vehicles)
+                setIsLoadingVehicles(false)
+            } catch (e: any) {
+                console.error(e)
+                setErrorText(e.message)
+                setIsLoadingVehicles(false)
+            }
+        }
+    }
 
     useEffect(() => {
         try {
-            document.title = params.id + " | Starter Project"
+            document.title = id + " | Starter Project"
 
-            // Fetch client and vehicles data
-            axios.get('http://localhost:8080/clients/' + params.id)
-                .then((res: AxiosResponse<ClientProps>) => {
-                    setClient(res.data)
-                }).catch((error) => {
-                    console.error(error.response.data.message)
-                    setErrorText(error.response.data.message)
-                });
-            axios.get('http://localhost:8080/clients/' + params.id + '/vehicles')
-                .then((res: AxiosResponse<Vehicles>) => {
-                    setVehicles({
-                        name: res.data.name,
-                        vehicles: res.data.vehicles?.sort(
-                            (a: VehicleProps, b: VehicleProps) => a.vin.localeCompare(b.vin))
-                    })
-                    setIsLoadingVehicles(false)
-                }).catch((error) => {
-                    setIsLoadingVehicles(false)
-                    console.error(error.response.data.message)
-                    setErrorText(error.response.data.message)
-                });
+            getClientInfo()
+            getClientVehicles()
         } catch (error) {
             console.error(error)
         }
-    }, [params.id])
+    }, [id])
 
     // Pagination functions
     const handleChangePage = (
@@ -118,18 +95,24 @@ const Client = () => {
     return (
         <div className="App">
             <Container>
-                <h1>{params.id}</h1>
+                <h1>{id}</h1>
                 <Box sx={{ flexGrow: 1 }}>
                     <Grid container spacing={2} columns={3}>
                         <Grid item xs={1}>
                             <Card>
                                 <CardHeader title="Client Info" />
-                                <CardContent style={{ textAlign: 'left' }}>
-                                    <h4>Contact Name</h4>
-                                    <p>{client?.contact_name}</p>
-                                    <h4>Contact Email</h4>
-                                    <p>{client?.contact_email}</p>
-                                </CardContent>
+                                {isLoadingClient ? (
+                                    <CardContent>
+                                        <CircularProgress />
+                                    </CardContent>
+                                ) : (
+                                    <CardContent style={{ textAlign: 'left' }}>
+                                        <h4>Contact Name</h4>
+                                        <p>{client?.contact_name}</p>
+                                        <h4>Contact Email</h4>
+                                        <p>{client?.contact_email}</p>
+                                    </CardContent>
+                                )}
                             </Card>
                         </Grid>
                         <Grid item xs={2}>
@@ -146,14 +129,14 @@ const Client = () => {
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
-                                            {is_loading_vehicles &&
+                                            {isLoadingVehicles &&
                                                 <TableRow>
                                                     <TableCell colSpan={4} align="center">
                                                         <CircularProgress />
                                                     </TableCell>
                                                 </TableRow>
                                             }
-                                            {vehicles?.vehicles?.slice(page * rows_per_page, page * rows_per_page + rows_per_page).map((vehicle, i) => {
+                                            {vehicles.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((vehicle, i) => {
                                                 return (
                                                     <VehicleRow {...vehicle} key={i} />
                                                 )
@@ -164,8 +147,8 @@ const Client = () => {
                                                 <TablePagination
                                                     rowsPerPageOptions={[3, 5, 10, 25]}
                                                     colSpan={3}
-                                                    count={vehicles?.vehicles?.length || 0}
-                                                    rowsPerPage={rows_per_page}
+                                                    count={vehicles.length || 0}
+                                                    rowsPerPage={rowsPerPage}
                                                     page={page}
                                                     onPageChange={handleChangePage}
                                                     onRowsPerPageChange={handleChangeRowsPerPage}
@@ -178,7 +161,7 @@ const Client = () => {
                         </Grid>
                     </Grid>
                 </Box>
-                {error_text && <p style={{ color: 'red' }}>Error: {error_text}</p>}
+                {errorText && <p style={{ color: 'red' }}>Error: {errorText}</p>}
             </Container>
         </div>
     )
